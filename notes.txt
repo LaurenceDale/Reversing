@@ -1,0 +1,83 @@
+Process
+
+1 - Follow LiveOverflow's Youtube Binary Exploitation Series
+2 - Starfighter.io's RE game challenge
+3 - Hackthebox.eu's reversing challenges
+
+
+Notes -
+
+Bin 0x04 LiveOverflow
+
+Do not be intimidated by ASM. Basically the collection of registers (between 8-32 of them) are just used as variables for performing computational tasts. For example:
+add eax 0x8
+sub eax 0x5
+(eax register will then show 0x3)
+
+What does not fit in registers, lives in memory. (assigned memory space)
+This stuff lives in the RAM when it's allocatedto memory. Got 16 gigs of ram? You can have 16 gigs worth of instructions (or there abouts). 
+
+PUSH 0x5 = adds 5 bites to the top of the stack
+POP eax = Copy the top of the stack (ESP) and store to the EAX register
+
+Stuff that's running in memory is accessed much faster than disk written stuff. 
+
+EIP = Instruction Pointer. What the program will do next. The control flow of the program is instructions that move the EIP register around to specific instructions. Jumps, Branches, Calls. 
+Jump 0x2 = go to 0x2
+
+Try out microcorruption.com
+
+
+Bin 0x05 - Simple license crack
+
+Using GDB!
+
+gdb (path to binary)
+set disassemble-flavor intel
+disassemble main
+ - drops the binary
+
+First steps are to look for control flow - so read through the binary for known instructions. In this one, we can see a compare instruction (CMP) to see if something == 0x02. Does something equal 2? This is infact looking for 2 arguments. 
+
+Then there is a JNE  (jump not equal. Do this IF NOT that) to a printf, which we know is going to print some text. 
+
+Then we can see a STRCMP (string compare). If you dont know what the function is doing - try in terminal 'man 3 strcmp'
+
+Run through!
+Set a break at the start. (break *main)
+then (run) the program. 
+(info registers) will show you the current register positions. 
+(si) steps instructions
+(ni) steps and prints output
+
+When looking at a program where we want to gain info on a control function - set a breakpoint before the instruction. (in this case, the last compare)
+(continue) resumes after a breakpoint
+(break *0x0000000000400607)
+
+Check what this location is in dissasemble main
+
+We can see here that it stops at the test EAX,EAX function. We can assume that the program is testing the licence key vs the hardcoded key. If it is a match, then the EAX register could equal 0. (true)
+
+(set $eax=0)
+(continue)
+ACCESS GRANTED!
+
+These are called Crackmes. All programs are crackable :). 
+
+bin 0x06 
+
+So another way of gaining information about executionflow is to read the ascii contents or hexdump of a file. Ascii of the compiled binary will come up with alot of apparent nonsense, because ascii can only display about half of the possible binary numbers (ie max 255). Open in a text editor or use hexdump -C.
+The (strings) binary parses the file and pulls out useful strings. 
+
+(strace) is another very useful binary which will trace system calls in an executable. Compiled c basically just uses Linux system functions to do stuff, for example printf uses the 'write' system call. 
+
+(ltrace) does similar, except it traces the library calls. 
+
+The software Hopper (£89) can attempt to decompile a binary back to C. This isnt exact, but a good representation of what the program looks like. This can be very useful. 
+
+Radare2 is also a beast of a debugger. Practice stuff with this. 
+Start with (r2 binaryname)
+(aaa) auto analyse
+(afl) print functions
+(VV) enter visual mode.
+Radare is hard - practice. 
